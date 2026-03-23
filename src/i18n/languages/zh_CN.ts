@@ -35,4 +35,9 @@ export const zh_CN: Translation = {
 	[Key.author]: "作者",
 	[Key.publishedAt]: "发布于",
 	[Key.license]: "许可协议",
+
+	[Key.countLoading]: "统计加载中……",
+	[Key.countPageVisits]: "阅读",
+	[Key.countUniqueVisitors]: "访客",
+	[Key.countLoadingError]: "统计加载失败",
 };

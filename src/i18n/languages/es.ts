@@ -35,4 +35,9 @@ export const es: Translation = {
 	[Key.author]: "Autor",
 	[Key.publishedAt]: "Publicado el",
 	[Key.license]: "Licencia",
+
+	[Key.countLoading]: "Cargando...",
+	[Key.countPageVisits]: "Visitas a la página",
+	[Key.countUniqueVisitors]: "Visitantes únicos",
+	[Key.countLoadingError]: "Error al cargar estadísticas",
 };

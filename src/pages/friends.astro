@@ -1,0 +1,175 @@
+---
+import { getEntry, render } from "astro:content";
+import { friends, friends1 } from "../friends";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import Comment from "../components/Comment.astro";
+import Markdown from "@components/misc/Markdown.astro";
+
+const friendContent = await getEntry("spec", "friends");
+const anotherContent = await getEntry("spec", "friends_another");
+const itemsContent = await getEntry("spec", "friends_items");
+
+if (!friendContent || !anotherContent || !itemsContent) {
+	throw new Error("Friend content not found");
+}
+
+const { Content: FriendContent } = await render(friendContent);
+const { Content: AnotherContent } = await render(anotherContent);
+const { Content: ItemsContent } = await render(itemsContent);
+
+---
+
+<MainGridLayout title={"友链"}>
+	<div class="card-base p-6 ">
+		<Markdown class="mt-2">
+			<FriendContent />
+		</Markdown>
+
+		<div class="grid grid-cols-1 mb-8 md:grid-cols-2 gap-4">
+			{friends.map((friend) => (
+				<a 
+				href={friend.url} 
+				target="_blank"
+				rel="noopener noreferrer"
+				class:list={[
+					"btn-plain rounded-[var(--radius-large)] p-3 group",
+					friend.url ? "" : "hover:!text-gray-500 active:!bg-gray-500"
+				]}>
+					<div class="flex items-center justify-around gap-3 w-full max-w-full min-w-0">
+						<div class="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+							<img 
+								src={friend.avatar} 
+								alt={friend.name} 
+								class="w-full h-full object-cover rotate-0 group-hover:rotate-[360deg] transition-rotate duration-500"
+							/>
+						</div>
+						<div class="flex-1 min-w-0 overflow-hidden">
+							<div class="space-y-1">
+								{friend.url ? (
+									<span
+										class="font-semibold max-w-full line-clamp-1 truncate"
+										title={`${friend.name}`}
+									>
+										{friend.name}
+									</span>
+								) : (
+									<span class="font-semibold text-gray cursor-not-allowed" title={`${friend.name}`}>{friend.name}</span>
+								)}
+								<span class="block text-sm truncate" title={`${friend.description}`}>{friend.description}</span>
+								<div class="flex flex-row min-w-0">{friend.url ? (
+									(() => {
+										let black = friend.url;
+										let red = "";
+										if (!friend.url)
+											black = "N/A";
+										if (friend.url.includes("https://"))
+											black = friend.url.replace("https://", "");
+										else if (friend.url.includes("http://")) {
+											black = friend.url.replace("http://", "");
+											red = "http://";
+										}
+										return <>
+											{red && <span class="text-xs font-mono text-red-500" title={friend.url}>
+												{red}
+											</span>}{black && <span 
+												class="text-xs font-mono group-hover:filter group-hover:-hue-rotate-30 truncate"
+												title={friend.url}
+											>
+												{black}
+											</span>}
+										</>
+									})()
+									// <span
+									// 	class="text-xs font-mono hover:filter hover:hue-rotate-60 hover:underline cursor-pointer"
+									// 	onclick={`(e) => {e.stopPropagation(); navigator.clipboard.writeText('${friend.url}');}`}
+									// ><Icon name="material-symbols:content-copy" class="text-xl scale-[.6]"></Icon>
+									// </span>
+								) : (
+									<span class="text-xs cursor-default text-black dark:text-white">已关站</span>
+								)}</div>
+							</div>
+						</div>
+					</div>
+				</a>
+			))}
+		</div>
+
+		<Markdown class="mt-2">
+			<AnotherContent />
+		</Markdown>
+
+		<div class="grid grid-cols-1 mb-8 md:grid-cols-2 gap-4">
+			{friends1.map((friend) => (
+				<a 
+				href={friend.url} 
+				target="_blank"
+				rel="noopener noreferrer"
+				class:list={[
+					"btn-plain rounded-[var(--radius-large)] p-3 group",
+					friend.url ? "" : "hover:!text-gray-500 active:!bg-gray-500"
+				]}>
+					<div class="flex items-center justify-around gap-3 w-full max-w-full min-w-0">
+						<div class="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+							<img 
+								src={friend.avatar} 
+								alt={friend.name} 
+								class="w-full h-full object-cover rotate-0 group-hover:rotate-[360deg] transition-rotate duration-500"
+							/>
+						</div>
+						<div class="flex-1 min-w-0 overflow-hidden">
+							<div class="space-y-1">
+								{friend.url ? (
+									<span
+										class="font-semibold max-w-full line-clamp-1 truncate"
+										title={`${friend.name}`}
+									>
+										{friend.name}
+									</span>
+								) : (
+									<span class="font-semibold text-gray cursor-not-allowed" title={`${friend.name}`}>{friend.name}</span>
+								)}
+								<span class="block text-sm truncate" title={`${friend.description}`}>{friend.description}</span>
+								<div class="flex flex-row min-w-0">{friend.url ? (
+									(() => {
+										let black = friend.url;
+										let red = "";
+										if (!friend.url)
+											black = "N/A";
+										if (friend.url.includes("https://"))
+											black = friend.url.replace("https://", "");
+										else if (friend.url.includes("http://")) {
+											black = friend.url.replace("http://", "");
+											red = "http://";
+										}
+										return <>
+											{red && <span class="text-xs font-mono text-red-500" title={friend.url}>
+												{red}
+											</span>}{black && <span 
+												class="text-xs font-mono group-hover:filter group-hover:-hue-rotate-30 truncate"
+												title={friend.url}
+											>
+												{black}
+											</span>}
+										</>
+									})()
+									// <span
+									// 	class="text-xs font-mono hover:filter hover:hue-rotate-60 hover:underline cursor-pointer"
+									// 	onclick={`(e) => {e.stopPropagation(); navigator.clipboard.writeText('${friend.url}');}`}
+									// ><Icon name="material-symbols:content-copy" class="text-xl scale-[.6]"></Icon>
+									// </span>
+								) : (
+									<span class="text-xs cursor-default text-black dark:text-white">已关站</span>
+								)}</div>
+							</div>
+						</div>
+					</div>
+				</a>
+			))}
+		</div>
+
+		<Markdown class="mt-2">
+			<ItemsContent />
+		</Markdown>
+        <Comment />
+	</div>
+</MainGridLayout>

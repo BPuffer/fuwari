@@ -24,7 +24,7 @@ export const zh_TW: Translation = {
 	[Key.postCount]: "篇文章",
 	[Key.postsCount]: "篇文章",
 
-	[Key.themeColor]: "主題色",
+	[Key.themeColor]: "主題色彩",
 
 	[Key.lightMode]: "亮色",
 	[Key.darkMode]: "暗色",
@@ -33,6 +33,11 @@ export const zh_TW: Translation = {
 	[Key.more]: "更多",
 
 	[Key.author]: "作者",
-	[Key.publishedAt]: "發佈於",
-	[Key.license]: "許可協議",
+	[Key.publishedAt]: "發表於",
+	[Key.license]: "授權協議",
+
+	[Key.countLoading]: "載入中...",
+	[Key.countPageVisits]: "頁面瀏覽量",
+	[Key.countUniqueVisitors]: "獨立訪客",
+	[Key.countLoadingError]: "載入統計失敗",
 };

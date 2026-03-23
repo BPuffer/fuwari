@@ -1,0 +1,7 @@
+.quote-author {
+    text-align: right;
+    font-style: italic;
+    color: var(--primary);
+    font-weight: 500;
+}
+

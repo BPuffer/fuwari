@@ -32,7 +32,12 @@ export const ko: Translation = {
 
 	[Key.more]: "더 보기",
 
-	[Key.author]: "저자",
+	[Key.author]: "작성자",
 	[Key.publishedAt]: "게시일",
 	[Key.license]: "라이선스",
+
+	[Key.countLoading]: "로드 중...",
+	[Key.countPageVisits]: "페이지 방문수",
+	[Key.countUniqueVisitors]: "고유 방문자",
+	[Key.countLoadingError]: "통계 로드에 실패했습니다",
 };

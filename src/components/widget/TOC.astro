@@ -1,7 +1,6 @@
 ---
 import type { MarkdownHeading } from "astro";
 import { siteConfig } from "../../config";
-import { url } from "../../utils/url-utils";
 
 interface Props {
 	class?: string;
@@ -16,7 +15,6 @@ for (const heading of headings) {
 }
 
 const className = Astro.props.class;
-const isPostsRoute = Astro.url.pathname.startsWith(url("/posts/"));
 
 const removeTailingHash = (text: string) => {
 	let lastIndexOfHash = text.lastIndexOf("#");
@@ -31,33 +29,35 @@ let heading1Count = 1;
 
 const maxLevel = siteConfig.toc.depth;
 ---
-{isPostsRoute &&
 <table-of-contents class:list={[className, "group"]}>
     {headings.filter((heading) => heading.depth < minDepth + maxLevel).map((heading) =>
-            <a href={`#${heading.slug}`} class="px-2 flex gap-2 relative transition w-full min-h-9 rounded-xl
-        hover:bg-[var(--toc-btn-hover)] active:bg-[var(--toc-btn-active)] py-2
-    ">
+            <a href={`#${heading.slug}`} class:list={[
+                "px-2 py-2 flex gap-2 relative transition w-full min-h-9 rounded-xl",
+                // "hover:bg-[var(--toc-btn-hover)] active:bg-[var(--toc-btn-active)]", // 旧的hover会遮挡active-indicator
+                "hover:bg-[var(--toc-btn-hover)] active:bg-[var(--toc-btn-active)]",
+                "hover:text-[var(--toc-text-hover)] active:text-[var(--toc-text-active)] group/toc-item"
+            ]}>
                 <div class:list={["transition w-5 h-5 shrink-0 rounded-lg text-xs flex items-center justify-center font-bold",
                     {
-                        "bg-[var(--toc-badge-bg)] text-[var(--btn-content)]": heading.depth == minDepth,
-                        "ml-4": heading.depth == minDepth + 1,
-                        "ml-8": heading.depth == minDepth + 2,
+                        "bg-[var(--toc-badge-bg-1st)] text-[var(--toc-badge-text)]": heading.depth == minDepth,
+                        "ml-4 bg-[var(--toc-badge-bg-2nd)] text-[var(--toc-badge-text)]": heading.depth == minDepth + 1,
+                        "ml-8 bg-[var(--toc-badge-bg)] text-[var(--toc-badge-text)]": heading.depth == minDepth + 2,
                     }
                 ]}
                 >
                     {heading.depth == minDepth && heading1Count++}
-                    {heading.depth == minDepth + 1 && <div class="transition w-2 h-2 rounded-[0.1875rem] bg-[var(--toc-badge-bg)]"></div>}
-                    {heading.depth == minDepth + 2 && <div class="transition w-1.5 h-1.5 rounded-sm bg-black/5 dark:bg-white/10"></div>}
+                    {heading.depth == minDepth + 1 && <div class="transition w-2 h-2 rounded-[0.1875rem]"></div>}
+                    {heading.depth == minDepth + 2 && <div class="transition w-1.5 h-1.5 rounded-sm"></div>}
                 </div>
-                <div class:list={["transition text-sm", {
-                    "text-50": heading.depth == minDepth || heading.depth == minDepth + 1,
-                    "text-30": heading.depth == minDepth + 2,
+                <div class:list={["transition text-sm group-hover/toc-item:text-[var(--toc-text-hover)]", {
+                    "text-[var(--toc-text-1st)]": heading.depth == minDepth || heading.depth == minDepth + 1,
+                    "text-[var(--toc-text)]": heading.depth == minDepth + 2,
                 }]}>{removeTailingHash(heading.text)}</div>
             </a>
     )}
-    <div id="active-indicator" style="opacity: 0" class:list={[{'hidden': headings.length == 0}, "-z-10 absolute bg-[var(--toc-btn-hover)] left-0 right-0 rounded-xl transition-all " +
-        "group-hover:bg-transparent border-2 border-[var(--toc-btn-hover)] group-hover:border-[var(--toc-btn-active)] border-dashed"]}></div>
-</table-of-contents>}
+    <div id="active-indicator" style="opacity: 0" class:list={[{'hidden': headings.length == 0}, "-z-10 absolute bg-[var(--toc-active-range-bg)] left-0 right-0 rounded-xl transition-all " +
+        "border-2 border-[var(--toc-active-range-border)] border-dashed"]}></div>
+</table-of-contents>
 
 <script>
 class TableOfContents extends HTMLElement {
@@ -229,7 +229,7 @@ class TableOfContents extends HTMLElement {
             document.querySelectorAll<HTMLAnchorElement>("#toc a[href^='#']")
         );
 
-        if (this.tocEntries.length === 0) return;
+        if (this.tocEntries.length === 0) return this.updateWrapper(false);
 
         this.sections = new Array(this.tocEntries.length);
         this.headings = new Array(this.tocEntries.length);
@@ -244,6 +244,7 @@ class TableOfContents extends HTMLElement {
             }
         }
         this.active = new Array(this.tocEntries.length).fill(false);
+        this.updateWrapper(this.headings.length > 0);
 
         this.sections.forEach((section) =>
             this.observer.observe(section)
@@ -260,6 +261,13 @@ class TableOfContents extends HTMLElement {
         this.observer.disconnect();
         this.tocEl?.removeEventListener("click", this.handleAnchorClick);
     };
+
+    updateWrapper = (hasHeadings: boolean) => {
+        // console.log("强制更新wrapper显隐, hasHeadings:", hasHeadings);
+        const wrapper = document.getElementById('toc-wrapper');
+        wrapper?.classList.toggle('hidden-by-noheading', !hasHeadings);
+        if (!wrapper) console.error("TOC wrapper not found");
+    }
 }
 
 if (!customElements.get("table-of-contents")) {

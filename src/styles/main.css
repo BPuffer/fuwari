@@ -60,11 +60,6 @@
         hover:decoration-[var(--link-hover)] active:decoration-[var(--link-active)] underline-offset-[0.25rem]
     }
 
-    .toc-hide,
-    .toc-not-ready {
-        @apply opacity-0 pointer-events-none
-    }
-
     #toc-inner-wrapper {
         mask-image: linear-gradient(to bottom, transparent 0%, black 2rem, black calc(100% - 2rem), transparent 100%);
     }
@@ -141,12 +136,18 @@
 }
 
 .custom-md spoiler {
-  @apply bg-[var(--codeblock-bg)] hover:bg-transparent px-1 py-0.5 overflow-hidden rounded-md transition-all duration-150;
+  @apply bg-[var(--codeblock-bg)] px-1 py-0.5 overflow-hidden rounded-md transition-all duration-150;
 
   &:not(:hover) {
     color: var(--codeblock-bg);
     * {
         color: var(--codeblock-bg);
+    }
+  }
+  &:hover {
+    color: white;
+    * {
+        color: white;
     }
   }
 }

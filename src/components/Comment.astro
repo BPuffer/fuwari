@@ -1,0 +1,46 @@
+---
+import { siteConfig } from "@/config";
+---
+
+{siteConfig.comment.giscus?.enabled && <div class="giscus-container rounded-xl onload-animation" set:html={siteConfig.comment.giscus.htmltag}></div>}
+
+
+{siteConfig.comment.twikoo?.enabled && <div class="text-black dark:text-white">
+<div id="twikoo-comment"></div>
+<script is:inline define:vars={{envId: siteConfig.comment.twikoo.envid}}>
+console.log(envId)
+
+// https://blog.tantalum.life/posts/add-comments-to-fuwari-with-twikoo/#%E8%A7%A3%E5%86%B3%E9%A6%96%E6%AC%A1%E5%8A%A0%E8%BD%BD%E4%B8%8D%E6%98%BE%E7%A4%BA
+
+function loadTwikoo() {
+  // 动态加载 Twikoo 脚本，并在加载完成后执行 twikoo.init
+  const script = document.createElement('script');
+  script.src = '/js/twikoo.min.js';
+  script.defer = true;
+  script.onload = () => {
+    if (window.twikoo) {
+      window.twikoo.init({
+            envId: envId,
+            el: '#twikoo-comment',
+            // region: 'ap-guangzhou', // 环境地域，默认为 ap-shanghai，腾讯云环境填 ap-shanghai 或 ap-guangzhou；Vercel 环境不填
+            // path: location.pathname, // 用于区分不同文章的自定义 js 路径，如果您的文章路径不是 location.pathname，需传此参数
+            lang: 'zh-CN',
+        });
+    } else {
+        console.error("Twikoo 加载失败：Twikoo 未载入")
+    }
+  };
+  script.onerror = (e) => {
+    console.error('Twikoo 加载失败：', e);
+  };
+  document.body.appendChild(script);
+}
+document.addEventListener("loadComment", loadTwikoo, { once: true }); // 监听加载评论事件，但是我们只能监听一次，从而避免多次触发。
+
+</script></div>}
+
+{/* # 1
+## 2
+### 3
+**ni***asdas*
+[111](https://www.baidu.com) */}

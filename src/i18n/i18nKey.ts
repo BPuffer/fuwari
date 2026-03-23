@@ -32,6 +32,11 @@ enum I18nKey {
 	author = "author",
 	publishedAt = "publishedAt",
 	license = "license",
+
+	countLoading = "countLoading",
+	countPageVisits = "countPageVisits",
+	countUniqueVisitors = "countUniqueVisitors",
+	countLoadingError = "countLoadingError",
 }
 
 export default I18nKey;

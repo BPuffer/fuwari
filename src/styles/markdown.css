@@ -1,7 +1,7 @@
+@import './main.css';
+
 .custom-md {
-    h1 {
-        @apply text-3xl;
-    }
+
 
     h1, h2, h3, h4, h5, h6 {
         .anchor {
@@ -19,8 +19,42 @@
         }
     }
 
+    h1 {
+        text-align: center;
+        border-bottom: 1px solid transparent;
+        border-image: linear-gradient(to right, transparent, var(--primary), transparent) 1;
+        color: var(--primary);
+        font-weight: bold;
+        font-size: 2rem;
+        font-family: serif;
+        padding: 0.5rem 0rem;
+        /* margin: 1rem calc(min(20vw, 200px)); */
+    }
+
+    h2 {
+        color: var(--toc-text-1st);
+        font-weight: 600;
+        font-size: 1.5rem;
+        margin: 1.5rem 0 0.25rem 0;
+        border-bottom: 1px solid transparent;
+        border-image: linear-gradient(to right, var(--toc-text-1st), transparent) 1;
+        border-left: 1rem solid var(--toc-text-1st);
+        padding: 0.25rem 1rem;
+    }
+
+    h3, h4, h5, h6 {
+        color: var(--toc-text);
+        font-weight: 600;
+        margin: 1rem 0 0.5rem 0;
+    }
+
+    h3 { font-size: 1.5rem;  }
+    h4 { font-size: 1.25rem; }
+    h5 { font-size: 1.1rem;  }
+    h6 { font-size: 1rem;    }
+
     a:not(.no-styling) {
-        @apply relative bg-none link font-medium text-[var(--primary)]
+        @apply relative bg-none font-medium text-[var(--primary)]
         underline decoration-[var(--link-underline)] decoration-1 decoration-dashed underline-offset-4;
         box-decoration-break: clone;
         -webkit-box-decoration-break: clone;
@@ -29,8 +63,9 @@
         &:hover, &:active {
             @apply decoration-transparent;
             background: var(--btn-plain-bg-hover);
-            border-bottom: 1px dashed var(--link-hover);
-            text-decoration: none;
+            /* border-bottom: 1px dashed var(--link-hover); */
+            /* text-decoration: none; */
+            text-decoration-color: var(--link-hover);
         }
     }
 
@@ -97,25 +132,269 @@
         }
     }
 
-    blockquote {
-        @apply not-italic border-transparent relative;
-        font-weight: inherit;
+    /* 引号装饰样式 */
+    blockquote:not(.admonition) {
+        position: relative;
+        background-color: rgba(248, 249, 250, 0.05);
+        padding: 5px 25px 5px 50px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
 
-        &:before {
-            @apply content-[''] absolute -left-1 block transition bg-[var(--btn-regular-bg)] h-full w-1 rounded-full;
-        }
+    /* 左上和右下引号样式 */
+    blockquote:not(.admonition)::before,
+    blockquote:not(.admonition)::after {
+        content: '“';
+        position: absolute;
+        font-size: 60px;
+        color: var(--primary);
+        opacity: 0.3;
+        font-family: Georgia, serif;
+        line-height: 1;
+        transition: all 0.3s ease;
+    }
 
-        /* Remove the double quotes from default styles */
+    blockquote:not(.admonition)::before {
+        top: 10px;
+        left: 15px;
+    }
+
+    blockquote:not(.admonition)::after {
+        bottom: 10px;
+        right: 15px;
+        transform: rotate(180deg);
+    }
+
+    /* 内容样式 */
+    blockquote:not(.admonition) > p {
+        font-style: italic;
+        font-weight: 400;
+        font-size: 16px;
+        color: var(--secondary);
+        border-color: transparent;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 1;
+    }
+
+    blockquote:not(.admonition) > p:before, 
+    blockquote:not(.admonition) > p:after {
+        content: none;
+    }
+
+    /* blockquote {
+
+        font-style: none;
+        border-color: transparent;
+        font-weight: 400;
+        color: var(--secondary);
+        
+        border-left: 0.5rem solid var(--primary);
+        border-bottom: 1px solid transparent;
+        padding-left: 0.5rem;
+
         p:before, p:after {
             @apply content-none;
         }
+        p {
+            margin: 0px;
+        }
 
-    }
+    } */
 
+    /* 已殺。详见Layout.astro全局搜索katex-display-container
     .katex-display-container {
         max-width: 100%;
         overflow-x: auto;
         margin: 1em 0;
+    } */
+    /* 留这个 */
+    .katex-display {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #777d #7770;
     }
+
+    /* 图片的居中和caption */
+    img {
+        justify-self: center;
+        margin-bottom: 0px;
+    }
+
+    .image-with-caption {
+        text-align: center;
+        margin: 0 auto; /* 让 figure 容器自身水平居中 */
+    }
+
+    .image-caption {
+        margin-top: 0.5rem; 
+        font-size: 0.875rem; 
+        color: #6b7280; 
+        font-style: italic; 
+        line-height: 1.4;
+    }
+
+    /* #region 列表 */
+    /* #region 无序列表 */
+    ul {
+        margin-top: 0em;
+        margin-bottom: 0em;
+        list-style: disc;
+    }
+    ul ul {
+        /*list-style: circle;*/
+        /* 请勿删除“–”后的空格, 他们对缩进有一定影响, 下同 */
+        list-style: "–   ";
+    }
+    ul ul ul {
+        list-style: "◦  ";
+    }
+    /* #endregion */
+
+    /* #region 有序列表 */
+    ol {
+        margin-top: 0em;
+        margin-bottom: 0em;
+        list-style: decimal;
+    }
+    ol ol {
+        counter-reset: liist;
+        list-style: none;
+    }
+    ol ol > li {
+        counter-increment: liist;
+        position: relative;
+    }
+    ol ol > li::before {
+        content: "(" counter(liist, lower-alpha) ")";
+        position: absolute;
+        left: -1.8em;
+    }
+    ol ol ol {  
+        counter-reset: liiist;
+        list-style: none;
+        margin: 0;
+    }
+    ol ol ol > li {
+        counter-increment: liiist;
+        position: relative;
+    }
+    ol ol ol > li::before {
+        content: counter(liiist, lower-roman) ".";
+        align-self: flex-end;
+        position: absolute;
+        left: -4.5em;
+        /* -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;*/
+        /* 为了让项目编号是重新用句点对齐而不是左对齐 */
+        width: 4em;
+        text-align: right;
+    }
+
+    ol,
+    ul {
+        padding-inline-start: 2em;
+    }
+
+    li {
+        position: relative;
+    }
+    li + li,
+    ul + ol > li,
+    ol + ul > li,
+    li > ul > li,
+    li > ol > li {
+        margin-top: 0em;
+    }
+    /* #endregion */
+
+    /* #region 缩进修正 */
+    li > p {
+        margin: 0;
+        padding: 0;
+        display: inline;
+    }
+    /* #endregion */
+    /* #endregion */
+
+    /* #region 表格（三线表） */
+    table {
+        /* 三线表表头顶边框，标准1.5磅 */
+        border-top: 1.5pt solid;
+        /* 三线表表尾底边框 */
+        border-bottom: 1.5pt solid;
+        font-family: var(--table-font), var(--base-Latin-font), var(--base-Chinese-font), serif;
+        /* font-size: var(--base-font-size); */
+        text-align: center;
+        break-inside: avoid-page;
+        border-spacing: 6px;
+        width: 100%;
+        /* 使表格默认居中；虽然这个代码不好，但好像没别的实现办法 */
+        margin: 0 auto;
+    }
+    table td {
+        padding: 2px;
+    }
+    table tr {
+        padding: 2px;
+        border: none;
+    }
+    th {
+        padding: 0px 6px;
+    }
+    thead {
+        /* 表格标题（首行）样式 */
+        /* 三线表表头底边框，标准0.75磅 */
+        border-bottom: 0.75pt solid;
+        font-family: var(--table-title-font), var(--heading-Latin-font), var(--heading-Chinese-font), serif !important;
+        /* font-size: var(--base-font-size); */
+        font-weight: var(--strong-weight);
+    }
+    /* #endregion */
+
+    /* #region details/summary */
+    details {
+        @apply my-4 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)];
+        transition: all 0.3s ease;
+    }
+
+    details:hover {
+        @apply border-[var(--primary)];
+    }
+
+    summary {
+        @apply cursor-pointer select-none px-4 py-3 font-medium text-[var(--text-primary)];
+        list-style: none;
+        display: flex;
+        align-items: center;
+    }
+
+    summary::-webkit-details-marker {
+        display: none;
+    }
+
+    summary::before {
+        content: '';
+        @apply mr-2 h-2 w-2 rounded-full bg-[var(--primary)];
+        transition: transform 0.3s ease;
+    }
+
+    details[open] summary::before {
+        transform: rotate(90deg);
+    }
+
+    details[open] summary {
+        @apply border-b border-[var(--border-color)];
+    }
+
+    details > *:not(summary) {
+        @apply px-4 pb-4 text-[var(--text-secondary)];
+    }
+    /* #endregion */
+
     
 }

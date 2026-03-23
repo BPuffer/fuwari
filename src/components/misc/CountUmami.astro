@@ -1,0 +1,91 @@
+---
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import { Icon } from "astro-icon/components";
+import { siteConfig } from "@/config";
+
+interface Props {
+	includeIcon: boolean;
+	path?: string;
+}
+const { includeIcon = true, path = null } = Astro.props;
+
+const uuid = Math.random().toString(36).substring(2, 10); // 避免同一页面多个统计产生冲突
+---
+
+<div class="umami-field loading flex items-center justify-center" data-umami-field={uuid}>
+    {includeIcon && <div class="meta-icon">
+        <Icon name="material-symbols:analytics-outline-rounded" class="text-xl"></Icon>
+    </div>}
+    <span class="umami-loading text-50 text-sm font-medium">{i18n(I18nKey.countLoading)}</span>
+    <span class="umami-stat text-50 text-sm font-medium">
+        {i18n(I18nKey.countPageVisits)}: <span class="umami-pv"></span>&nbsp;&nbsp;
+        {i18n(I18nKey.countUniqueVisitors)}: <span class="umami-uv"></span>
+    </span>
+    <span class="umami-error text-50 text-sm font-medium">{i18n(I18nKey.countLoadingError)}</span>
+    <script is:inline define:vars={{ 
+        websiteId: siteConfig.count.umamiCloud.websiteId, 
+        apiKey: siteConfig.count.umamiCloud.apiKey,
+        uuid,
+        path,
+    }}>(async () => {
+        const pathInUse = path || window.location.pathname;
+        const cacheKey = `umami-${websiteId}-${pathInUse}`;
+        const field = document.querySelector(`.umami-field[data-umami-field="${uuid}"]`);
+        if (!field) {
+            console.error(`未找到作用块，uuid: ${uuid}`);
+            return;
+        }
+        const pv = field.querySelector(".umami-pv");
+        const uv = field.querySelector(".umami-uv");
+        try {
+            const cache = JSON.parse(localStorage.getItem(cacheKey)) || {};
+            const data = cache.data;
+            if (cache && data && cache.timestamp && Date.now() - cache.timestamp < 5 * 60 * 1000) {
+                pv.textContent = data.pageviews;
+                uv.textContent = data.visitors;
+                field.classList.remove("loading");
+                field.classList.add("success");
+                return;
+            }
+        } catch (e) {
+            console.error("读取 umami 缓存失败：", e);
+            // 缓存解析失败，继续请求接口
+        }
+
+        // 4. 缓存过期/不存在，发起接口请求
+        try {
+            const url = `https://api.umami.is/v1/websites/${websiteId}/stats?startAt=0&endAt=${Date.now()}&path=${encodeURIComponent(pathInUse)}`;
+            const response = await fetch(url, { headers: {"x-umami-api-key": apiKey} });
+
+            // 检查响应是否成功
+            if (!response.ok) {
+                throw new Error(`umami 接口请求失败：${response.status} ${response.statusText}`);
+            }
+
+            // 解析响应数据
+            const data = await response.json();
+            pv.textContent = data.pageviews;
+            uv.textContent = data.visitors;
+            field.classList.remove("loading");
+            field.classList.add("success");
+
+            // 写入本地缓存
+            localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+        } catch (e) {
+            // 捕获所有错误（接口请求/解析/缓存写入）
+            console.error("umami 数据请求失败：", e);
+            field.classList.remove("loading");
+            field.classList.add("failed");
+        }
+        })();
+    </script>
+</div>
+<style>
+    .umami-field .umami-loading, .umami-field .umami-stat, .umami-field .umami-error {
+        display: none;
+    }
+    .umami-field.loading .umami-loading, .umami-field.success .umami-stat, .umami-field.failed .umami-error {
+        display: inline;
+    }
+</style>

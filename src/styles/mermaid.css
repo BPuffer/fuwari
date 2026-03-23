@@ -1,0 +1,26 @@
+.mermaid-picture {
+  display: block;
+  margin: 2rem 0;
+  position: relative;
+}
+
+.mermaid-picture .mermaid-img-light {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-picture .mermaid-img-dark {
+  display: none;
+  max-width: 100%;
+  height: auto;
+}
+
+/* 深色模式 */
+:root.dark .mermaid-picture .mermaid-img-light {
+  display: none;
+}
+
+:root.dark .mermaid-picture .mermaid-img-dark {
+  display: block;
+}

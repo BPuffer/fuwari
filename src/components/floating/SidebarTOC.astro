@@ -1,0 +1,245 @@
+---
+import TOC from "@components/widget/TOC.astro";
+import type { MarkdownHeading } from "astro";
+import { Icon } from "astro-icon/components";
+import { siteConfig } from "@/config";
+
+interface Props {
+	class?: string;
+	headings?: MarkdownHeading[];
+}
+const { class: className = "", headings = [] } = Astro.props;
+---
+<div class:list={["sidebar-toc fixed w-[var(--toc-width)] pointer-events-none",
+                className,
+            ]}>
+    <details id="toc-wrapper" class:list={[
+        "hidden-by-init",
+        "mx-4 w-[var(--toc-width)]", 
+        // "debug-style border-2 border-solid border-salmon-500",
+        "duration-300 h-[100vh]", 
+        "duration-300 translate-x-0", 
+        "open:translate-x-[var(--toc-expand-translate)]", // 打开时平移
+        "xl:open:translate-x-[0]", // xl打开时不动
+        "xl:hover:translate-x-[var(--toc-expand-translate)]", // xl悬停时平移
+        ]} style={{
+            transition: "opacity 0.15s ease-in-out, transform 0.3s ease-in-out",
+        }}>
+        <summary class:list={[
+            "block xl:hidden fixed left-0 -translate-y-[0] -translate-x-full", // xl隐藏，xl悬浮常驻
+            // "debug-style border-2 border-solid border-blue-500",
+            ]}>
+            <div class:list={[
+                "toc-float-btn",
+                "flex items-center justify-between w-[4.5rem] h-[2rem] rounded-l-full bg-[var(--toc-bg)] transition-all duration-300",
+                "hover:bg-[var(--toc-bg-hover)] hover:text-[var(--toc-text-hover)]", // 触摸后变化反馈
+                "border-2 border-solid border-[var(--toc-badge-text)]", // 没有边框识别度很低
+            ]} style={{
+                transform: "translateY(50vh)",
+            }}>
+                <Icon class="toc-icon close" name="material-symbols:toc" />
+                <Icon class="toc-icon open" name="material-symbols:devices-fold" />
+                <div class="w-0 h-0"></div>
+            </div>
+        </summary>
+        <div id="toc-inner-wrapper" class:list={[
+            "fixed top-14 w-[var(--toc-width)] height-toc overflow-y-scroll overflow-x-hidden hide-scrollbar",
+            "bg-[var(--toc-bg)] open:bg-[var(--toc-bg-hover)] hover:bg-[var(--toc-bg-hover)]",
+        ]}>
+            <div id="toc" class:list={[
+                "w-full h-full transition-swup-fade transition-opacity duration-300"]}>
+                <div class="h-8 w-full"></div>
+                <TOC headings={headings}></TOC>
+                <div class="h-8 w-full"></div>
+            </div>
+        </div>
+    </details>
+</div>
+<style>
+/* 重置details的所有样式 */
+details#toc-wrapper {
+    display: block;
+    padding: 0;
+    border: none;
+    outline: none;
+    background: none;
+}
+
+details#toc-wrapper summary {
+    align-items: center;
+    cursor: pointer;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+details#toc-wrapper > :not(summary) {
+    display: block !important;
+}
+
+details#toc-wrapper summary::-webkit-details-marker, details#toc-wrapper summary::marker, details#toc-wrapper summary::-moz-list-bullet {
+    display: none;
+}
+
+/* 高度 */
+@media (max-width: 1280px) {.height-toc {
+    height: var(--toc-height-mobile);
+}}
+@media (min-width: 1281px) {.height-toc {
+        height: var(--toc-height-hanging);
+}}
+
+.toc-summary-translate {
+    transform: translateX(calc(-100%)); /* 16px是主布局margin-right */
+    /* translate-x-[calc(16px-100%)] open:translate-x-[calc(-100%)] */
+}
+details#toc-wrapper[open] .toc-summary-translate {
+    transform: translateX(calc(-100%));
+}
+
+/* 标题基显隐 */
+details#toc-wrapper {
+    opacity: 1;
+    pointer-events: auto;
+}
+details#toc-wrapper.hidden-by-noheading, 
+details#toc-wrapper.hidden-by-path, 
+details#toc-wrapper.hidden-by-scroll, 
+details#toc-wrapper.hidden-by-jump, 
+details#toc-wrapper.hidden-by-init {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.no-transition {
+    transition: none !important;
+}
+
+/* 图标旋转变换控制 */
+.toc-icon.open {
+    --transition-scale: 1.4;
+}
+.toc-icon.close {
+    --transition-scale: 1.6;
+}
+.toc-icon {
+    position: absolute;
+    left: 20%;
+    margin: auto;
+    color: var(--toc-text);
+    transform: rotate(180deg) scale(var(--transition-scale));
+    transition: transform .3s ease-in-out, opacity .3s ease-in-out;
+}
+details#toc-wrapper[open] .toc-icon {
+    transform: rotate(0deg) scale(var(--transition-scale));
+}
+.toc-icon.open, details#toc-wrapper[open] .toc-icon.close {
+    opacity: 0;
+}
+.toc-icon.close, details#toc-wrapper[open] .toc-icon.open {
+    opacity: 1;
+}
+</style>
+<script is:inline data-whiteList={siteConfig.toc.whiteList}>
+    (() => {
+        const tocWrapper = document.getElementById("toc-wrapper");
+        if (tocWrapper) {
+        
+            tocWrapper.classList.remove('hidden-by-init');
+
+			// 在非/post/下的或非白名单内的不显示
+            // 此逻辑在Layout.astro中也有，此处用于初始化，彼处用于swup跳转钩子
+            const whiteList = JSON.parse(document.currentScript.dataset.whiteList || '[]');
+            const showToc = [...(whiteList || []), '/posts/']?.some(element => window.location.pathname.includes(element));
+       	 	tocWrapper?.classList.toggle('hidden-by-path', !showToc);
+            if (window.innerWidth > 1280) {
+                // 桌面端：直接启用details open，悬浮控制显隐（其实一直是显的，hover只是滑移进来）
+                tocWrapper.setAttribute('open', 'true');
+            } else {
+                // 移动端：如果点击位置不是details容器内，关闭details
+                document.addEventListener("click", (e) => {
+                    if (!e.target.closest("#toc-wrapper")) {
+                        tocWrapper.removeAttribute('open');
+                    }
+                });
+            }
+        }
+
+        class DragController {
+            constructor(element) {
+                this.element = element;
+                this.isDragging = false;
+                this.startY = 0;
+                this.dragStartY = 0;
+                this.currentY = window.innerHeight * 0.8;
+                // 初始化样式
+                element.style.transform = `translateY(${this.currentY}px)`;
+                // 绑定事件
+                this.handlers = {
+                    mousedown: (e) => this.start(e, e.clientY),
+                    touchstart: (e) => this.start(e, e.touches[0].clientY),
+                    mousemove: (e) => this.move(e, e.clientY),
+                    touchmove: (e) => this.move(e, e.touches[0].clientY),
+                    mouseup: (e) => this.stop(e),
+                    touchend: (e) => this.stop(e)
+                };
+                
+                element.addEventListener("mousedown", this.handlers.mousedown);
+                element.addEventListener("touchstart", this.handlers.touchstart, { passive: false });
+                document.addEventListener("mousemove", this.handlers.mousemove);
+                document.addEventListener("touchmove", this.handlers.touchmove, { passive: false });
+                document.addEventListener("mouseup", this.handlers.mouseup);
+                document.addEventListener("touchend", this.handlers.touchend);
+            }
+
+            start(_, clientY) {
+                this.element.classList.add("no-transition");
+
+                this.isDragging = true;
+                this.startY = clientY;
+                this.dragStartY = this.currentY;
+                this.element.style.cursor = "grabbing";
+                this.element.style.userSelect = "none";
+            }
+
+            move(e, clientY) {
+                if (!this.isDragging) return;
+                e.preventDefault()
+                const deltaY = clientY - this.startY;
+                this.currentY += deltaY;
+                this.startY = clientY;
+                this.element.style.transform = `translateY(${this.currentY}px)`;
+            }
+
+            stop(_) {
+                this.element.classList.remove("no-transition");
+                this.isDragging = false;
+                this.element.style.cursor = "pointer";
+                this.element.style.userSelect = "";
+                // if (Math.abs(this.dragStartY - this.currentY) > 5) {
+                //     e.preventDefault() // 拖动后防止意外激活summary点击事件
+                //     e.stopPropagation(); // 终止冒泡
+                //     console.log("拖动距离超过5px，禁止点击事件", this.dragStartY, this.currentY, Math.abs(this.dragStartY - this.currentY));
+                // } else 
+                //     console.log("拖动距离:", Math.abs(this.dragStartY - this.currentY));
+            }
+
+            destroy() {
+                const el = this.element;
+                el.removeEventListener("mousedown", this.handlers.mousedown);
+                el.removeEventListener("touchstart", this.handlers.touchstart);
+                document.removeEventListener("mousemove", this.handlers.mousemove);
+                document.removeEventListener("touchmove", this.handlers.touchmove);
+                document.removeEventListener("mouseup", this.handlers.mouseup);
+                document.removeEventListener("touchend", this.handlers.touchend);
+            }
+        }
+
+        // 初始化拖动控制器
+        const tocContainer = document.querySelector(".toc-float-btn");
+        if (tocContainer) {
+            window.dragController = new DragController(tocContainer);
+        }
+
+    })()
+</script>

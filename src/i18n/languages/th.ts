@@ -35,4 +35,9 @@ export const th: Translation = {
 	[Key.author]: "ผู้เขียน",
 	[Key.publishedAt]: "เผยแพร่เมื่อ",
 	[Key.license]: "สัญญาอนุญาต",
+
+	[Key.countLoading]: "กำลังโหลด...",
+	[Key.countPageVisits]: "การเข้าชมหน้า",
+	[Key.countUniqueVisitors]: "ผู้เข้าชมเฉพาะ",
+	[Key.countLoadingError]: "ไม่สามารถโหลดสถิติได้",
 };

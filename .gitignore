@@ -17,7 +17,6 @@ pnpm-debug.log*
 .env
 .env.production
 
-# macOS-specific files
 .DS_Store
 
 .vercel
@@ -26,6 +25,12 @@ package-lock.json
 bun.lockb
 yarn.lock
 
+
+*.cmd
+
 # ide
 .idea
+.vscode
+.trae
 *.iml
+.obsidian

@@ -24,8 +24,9 @@ define(vars)
 
 define({
   --primary: oklch(0.70 0.14 var(--hue)) oklch(0.75 0.14 var(--hue))
+  --secondary: oklch(0.55 0.08 var(--hue)) oklch(0.65 0.08 var(--hue))
   --page-bg: oklch(0.95 0.01 var(--hue)) oklch(0.16 0.014 var(--hue))
-  --card-bg: white oklch(0.23 0.015 var(--hue))
+  --card-bg: oklch(1 0 var(--hue) \/ 0.9) oklch(0.23 0.015 var(--hue) \/ 0.95)
 
   --btn-content: oklch(0.55 0.12 var(--hue)) oklch(0.75 0.1 var(--hue))
 
@@ -62,7 +63,7 @@ define({
   --license-block-bg: black(0.03) var(--codeblock-bg)
 
   --link-underline: oklch(0.93 0.04 var(--hue)) oklch(0.40 0.08 var(--hue))
-  --link-hover: oklch(0.95 0.025 var(--hue)) oklch(0.40 0.08 var(--hue))
+  --link-hover: oklch(0.95 0.025 var(--hue)) oklch(0.70 0.08 var(--hue))
   --link-active: oklch(0.90 0.05 var(--hue)) oklch(0.35 0.07 var(--hue))
 
   --float-panel-bg: white oklch(0.19 0.015 var(--hue))
@@ -89,10 +90,28 @@ define({
   --admonitions-color-important: oklch(0.7 0.14 310) oklch(0.75 0.14 310)
   --admonitions-color-warning: oklch(0.7 0.14 60) oklch(0.75 0.14 60)
   --admonitions-color-caution: oklch(0.6 0.2 25) oklch(0.65 0.2 25)
+  
+  --toc-space: calc(max(50vw - var(--page-width) / 2, 0px))
+  --toc-width: calc(min(var(--toc-space) + 320px - 32px, 320px))  // 320px: 侧栏宽; 32px: 侧栏组件px-4
+  --toc-expand-right: calc(min(var(--toc-space), var(--toc-width)))
+  --toc-expand-translate: calc(min(var(--toc-space), var(--toc-width)) - var(--toc-width))
 
-  --toc-badge-bg: oklch(0.89 0.050 var(--hue)) var(--btn-regular-bg)
-  --toc-btn-hover: oklch(0.926 0.015 var(--hue)) oklch(0.22 0.02 var(--hue))
-  --toc-btn-active: oklch(0.90 0.015 var(--hue)) oklch(0.25 0.02 var(--hue))
-  --toc-width: calc((100vw - var(--page-width)) / 2 - 1rem)
-  --toc-item-active: oklch(0.70 0.13 var(--hue)) oklch(0.35 0.07 var(--hue))
+  --toc-bg: var(--card-bg) var(--card-bg)
+  --toc-bg-hover: var(--card-bg) var(--card-bg)
+  --toc-btn-hover: oklch(0.50 0.07 var(--hue) \/ 0.5) oklch(0.75 0.03 var(--hue) \/ 0.5)
+  --toc-btn-active: oklch(0.35 0.07 var(--hue) \/ 0.5) oklch(0.50 0.03 var(--hue) \/ 0.5)
+  --toc-text-1st: oklch(0.25 0.1 var(--hue)) oklch(0.95 0.05 var(--hue))
+  --toc-text: oklch(0.4 0.06 var(--hue)) oklch(0.8 0.04 var(--hue))
+  --toc-text-hover: oklch(0.2 0.12 var(--hue)) oklch(0.98 0.08 var(--hue))
+  --toc-text-active: oklch(0.15 0.15 var(--hue)) oklch(0.98 0.1 var(--hue))
+  --toc-badge-text: oklch(0.6 0.15 var(--hue)) oklch(0.80 0.08 var(--hue))
+  --toc-badge-bg-1st: oklch(0.9 0.045 var(--hue)) var(--btn-regular-bg)
+  --toc-badge-bg-2nd: var(--toc-badge-bg-1st) var(--toc-badge-bg-1st)
+  --toc-height-hanging: calc(100vh - 20rem)
+  --toc-height-mobile: calc(100vh - 5rem)
+  --toc-badge-bg: var(--toc-badge-bg-1st) var(--toc-badge-bg-1st)
+  --toc-active-range-border: oklch(0.65 0.25 var(--hue) \/ 0.8) oklch(0.65 0.25 var(--hue) \/ 0.8)
+  --toc-active-range-bg: oklch(0.9 0.1 var(--hue) \/ 0.3) oklch(0.25 0.1 var(--hue) \/ 0.4)
+
+  --brightness-delta: 0.5 1.5
 })

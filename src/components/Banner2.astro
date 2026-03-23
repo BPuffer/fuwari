@@ -1,0 +1,316 @@
+---
+import { banner2Param } from "@utils/banner-utils";
+import { Icon } from "astro-icon/components";
+import { siteConfig } from "../config";
+import Typewriter from "./widget/Typewriter.astro";
+
+const textTitle = siteConfig.banner2.text.title || null;
+const textSubtitleContent = siteConfig.banner2.text.subtitle
+	? typeof siteConfig.banner2.text.subtitle?.content === "string"
+		? [siteConfig.banner2.text.subtitle?.content]
+		: siteConfig.banner2.text.subtitle?.content || null
+	: null;
+const textSubtitleTypewriterEnable =
+	siteConfig.banner2.text.subtitle?.typewriterEnable || false;
+const textSubtitleTypewriterSpeed =
+	siteConfig.banner2.text.subtitle?.typewriterSpeed || 100;
+
+const wavingTiers = siteConfig.banner2.waving.tiers;
+const { durations, frequencyTimes, amplitudes, heights } = banner2Param(
+	wavingTiers,
+	siteConfig.banner2.waving.speed,
+	siteConfig.banner2.waving.frequencyTimes,
+	siteConfig.banner2.waving.heightBottomMax,
+	siteConfig.banner2.waving.amplitudeStdpara,
+);
+
+const mobileWavingTiers = siteConfig.banner2.mobileWaving.tiers || wavingTiers;
+const {
+	durations: mobileDurations,
+	frequencyTimes: mobileFrequencyTimes,
+	amplitudes: mobileAmplitudes,
+	heights: mobileHeights,
+} = banner2Param(
+	mobileWavingTiers,
+	siteConfig.banner2.mobileWaving.speed || siteConfig.banner2.waving.speed,
+	siteConfig.banner2.mobileWaving.frequencyTimes ||
+		siteConfig.banner2.waving.frequencyTimes,
+	siteConfig.banner2.mobileWaving.heightBottomMax ||
+		siteConfig.banner2.waving.heightBottomMax,
+	siteConfig.banner2.mobileWaving.amplitudeStdpara ||
+		siteConfig.banner2.waving.amplitudeStdpara,
+);
+---
+<div id="banner2-container" class={`absolute top-0 z-0 w-full overflow-hidden`}>
+    <!-- 标题和slogan打字机 -->
+    <div
+        class="banner2-text absolute inset-0 flex flex-col gap-4 items-center justify-center z-[4] 
+            font-serif drop-shadow-[0_0_0.4rem_rgba(0,0,0,1)] text-white/90 text-shadow-[0_0_8px_#000,0_0_20px_rgba(255,215,0,0.8)]"
+    >
+        {(() => { return (<>
+            {textTitle && <h1 class="banner2-title 
+            text-5xl lg:text-7xl font-bold ">{textTitle}</h1>}
+            {textSubtitleContent && (
+                <p class="banner2-subtitle-container 
+                text-[1.5rem] font-medium h-[3lh] max-h-[3lh] overflow-hidden text-center">
+                    {textSubtitleTypewriterEnable ? (
+                        <Typewriter class="banner2-subtitle typewriter" 
+                            textList={textSubtitleContent!!} 
+                            speed={textSubtitleTypewriterSpeed} 
+                            delay={1500} 
+                        />
+                    ) : (
+                        <span class="banner2-subtitle" data-textlist={JSON.stringify(textSubtitleContent)}></span>
+                        <script is:inline>
+                            const textList = JSON.parse(document.querySelector(".banner2-subtitle").dataset.textlist);
+                            document.querySelector(".banner2-subtitle").innerHTML = textList.join("");
+                        </script>
+                    )}
+                </p>
+            )}
+        </>)})()}
+    </div>
+
+    <!-- 所有图片层 -->
+    {(() => (
+        // 此处window，track，track::after的样式在下面独立块定义，因为经常调还很复杂还重复所以不要写tailwind
+        <div class="banner2-banner" style={`--banner2-track-bg: url(${siteConfig.banner2.src.placeholder})`}>
+            <div class="banner2-window banner2-window-desktop hidden lg:block">
+                {wavingTiers.map((opacity, i) => (
+                    <div class={`banner2-track banner2-img-wave-${i}`} 
+                        style={{
+                            animationDuration: `${durations[i]}s`,
+                            clipPath: `url(#banner2-cp-d-${i})`,
+                            opacity: opacity / 100
+                        }}
+                    ></div>
+                ))}
+            </div>
+            <div class="banner2-window banner2-window-mobile block lg:hidden">
+                {mobileWavingTiers.map((opacity, i) => (
+                    <div class={`banner2-track banner2-img-wave-${i}`} 
+                        style={{
+                            animationDuration: `${mobileDurations[i]}s`,
+                            clipPath: `url(#banner2-cp-m-${i})`,
+                            opacity: opacity / 100
+                        }}
+                    ></div>
+                ))}
+            </div>
+                <a href="#" id="banner2-credit" target="_blank" rel="noopener" aria-label="Visit image source"
+                    class="banner2-credit-a z-[6] group onload-animation transition-all duration-300 absolute flex justify-center items-center rounded-full px-3 right-4 bottom-10 bg-black/60 hover:bg-black/70 h-9" 
+                >
+                    <Icon class="text-white/75 text-[1.25rem] mr-1" name="material-symbols:copyright-outline-rounded" ></Icon>
+                    <div class="banner2-credit-text text-white/75 text-xs">图片版权信息</div>
+                    <Icon class:list={["banner2-credit-icon transition-all text-[oklch(0.75_0.14_var(--hue))] text-[0.75rem] opacity-0 group-hover:opacity-100 w-0 group-hover:w-4 duration-300 ml-1"]}
+                        name="fa6-solid:arrow-up-right-from-square">
+                    </Icon>
+                </a>
+                <style>
+                    .banner2-credit-a:active {
+                        background-color: rgba(0, 0, 0, 0.8);
+                    }
+                    .banner2-credit-icon.disabled {
+                        display: none;
+                    }
+                </style>
+        </div>
+    ))()}
+
+    <svg 
+        width="0" 
+        height="0" 
+        class="banner2-desktop-only"
+    >
+        <defs>
+        {wavingTiers.map((_, i) => { 
+            const wT = frequencyTimes[i];
+            const A = amplitudes[i];
+            const vb = heights[i];
+
+            const w = 1 / 4 / wT;
+            const wc = 4 / 25 / wT
+            const repeatTimes = Math.ceil(0.4999 / w);
+            const wavePath = `
+            M0,${1 - vb} 
+            c${w/2},0,${wc},${-A},${w},${-A} s${wc},${A},${w},${A} ` +
+            `${wc},${-A},${w},${-A} ${wc},${A},${w},${A} `.repeat(repeatTimes - 1) +
+            `v${vb-1} h-${repeatTimes * 2 * w} z`;
+            return (
+            <clipPath id={`banner2-cp-d-${i}`} clipPathUnits="objectBoundingBox">
+                <path id={`wave-path-d-${i}`} d={wavePath}></path>
+            </clipPath>
+            )
+        })} 
+        </defs>
+    </svg>
+    <svg 
+        width="0" 
+        height="0" 
+        class="banner2-mobile-only"
+    >
+        <defs>
+        {mobileWavingTiers.map((_, i) => { 
+            const wT = mobileFrequencyTimes[i];
+            const A = mobileAmplitudes[i];
+            const vb = mobileHeights[i];
+
+            const w = 1 / 4 / wT;
+            const wc = 4 / 25 / wT
+            const repeatTimes = Math.ceil(0.4999 / w);
+            const wavePath = `
+            M0,${1 - vb} 
+            c${w/2},0,${wc},${-A},${w},${-A} s${wc},${A},${w},${A} ` +
+            `${wc},${-A},${w},${-A} ${wc},${A},${w},${A} `.repeat(repeatTimes - 1) +
+            `v${vb-1} h-${repeatTimes * 2 * w} z`;
+            if (wavePath.includes("NaN")) {
+                throw Error("Unexcepted NaN in wavePath: " + wavePath + JSON.stringify({
+                    vb, wT, A, w, wc, repeatTimes
+                }))
+            }
+            return (
+            <clipPath id={`banner2-cp-m-${i}`} clipPathUnits="objectBoundingBox">
+                <path id={`wave-path-m-${i}`} d={wavePath}></path>
+            </clipPath>
+            )
+        })} 
+        </defs>
+    </svg>
+    
+    <!-- 插入图片src的钩子代码在Layout setup中 -->
+    <meta name="banner2ImgSrc" 
+        data-banner2ldimgsrc={JSON.stringify(siteConfig.banner2.src.lightDesktop)} 
+        data-banner2ddimgsrc={JSON.stringify(siteConfig.banner2.src.darkDesktop === 'inherit' ? siteConfig.banner2.src.lightDesktop : siteConfig.banner2.src.darkDesktop)} 
+        data-banner2lmimgsrc={JSON.stringify(siteConfig.banner2.src.lightMobile)} 
+        data-banner2dmimgsrc={JSON.stringify(siteConfig.banner2.src.darkMobile === 'inherit' ? siteConfig.banner2.src.lightMobile : siteConfig.banner2.src.darkMobile)} 
+    >
+</div>
+
+<style>
+/* 波纹 */
+/* 桌面端 */
+@media (min-width: 1025px) {
+    .banner2-window {
+        --banner-width: 2560px;
+        --banner-height: 100%;
+        position: absolute;
+        inset: 0;
+        left: calc(50% - var(--banner-width) / 2);
+        width: var(--banner-width);
+        height: var(--banner-height);
+        overflow-x: hidden;
+    }
+
+    .banner2-track {
+        position: absolute;
+        width: 200%;
+        height: 100%;
+        display: flex;
+        animation-name: banner2-desktop-cycle;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        z-index: 2;
+    }
+ 
+    .banner2-track::after {
+        width: 50%;
+        height: 100%;
+        position: sticky;
+        left: 0;
+        content: '';
+        display: block;
+        box-sizing: border-box;
+        background: no-repeat fixed center / cover;
+        background-image: var(--banner2-track-bg);
+    }
+
+    .banner2-svg-desktop {
+        display: block !important;
+    }
+
+    .banner2-svg-mobile {
+        display: none !important;
+    }
+}
+/* 手机端 */
+@media (max-width: 1024px) {
+    .banner2-window {
+        --banner-width: 1024px;
+        --banner-height: 100%;
+        position: absolute;
+        inset: 0;
+        width: var(--banner-width);
+        height: var(--banner-height);
+        overflow-x: hidden;
+    }
+
+    .banner2-track {
+        position: absolute;
+        left: 0;
+        width: 200%;
+        height: 100%;
+        display: flex;
+        animation-name: banner2-mobile-leftcycle;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        transform: translateZ(0);
+        will-change: transform;
+    }
+
+    .banner2-track::after {
+        position: sticky;
+        left: 0;
+        width: 100vw;
+        height: 100%;
+        left: 0;
+        content: '';
+        display: block;
+        animation-name: banner2-mobile-rightcycle;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        animation-duration: inherit;
+        box-sizing: border-box;
+        background: no-repeat top / cover;
+        background-image: var(--banner2-track-bg);
+        transform: translateZ(0);
+        will-change: transform;
+    }
+
+    .banner2-svg-desktop {
+        display: none !important;
+    }
+
+    .banner2-svg-mobile {
+        display: block !important;
+    }
+}
+
+@keyframes banner2-desktop-cycle {
+    0% { left: 0; }
+    100% { left: calc(-1 * var(--banner-width)); }
+}
+
+@keyframes banner2-mobile-leftcycle {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(-1 * var(--banner-width))); }
+}
+
+@keyframes banner2-mobile-rightcycle {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(var(--banner-width))); }
+}
+
+@supports (height: 1lh) {
+    .banner2-subtitle-container {
+        height: 3lh;
+        max-height: 3lh;
+    }
+}
+@supports not (height: 1lh) {
+    .banner2-subtitle-container {
+        height: calc(1.5ex * 3);
+        max-height: calc(1.5ex * 3);
+    }
+}
+
+</style>

@@ -1,9 +1,11 @@
 ---
 import { Icon } from "astro-icon/components";
+import { siteConfig } from "@/config";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import { getCategoryUrl, getTagUrl } from "../utils/url-utils";
+import CountUmami from "./misc/CountUmami.astro";
 
 interface Props {
 	class: string;
@@ -13,6 +15,7 @@ interface Props {
 	category: string | null;
 	hideTagsForMobile?: boolean;
 	hideUpdateDate?: boolean;
+	hideCount?: boolean;
 }
 const {
 	published,
@@ -21,7 +24,9 @@ const {
 	category,
 	hideTagsForMobile = false,
 	hideUpdateDate = false,
+	hideCount = false,
 } = Astro.props;
+
 const className = Astro.props.class;
 ---
 
@@ -79,4 +84,7 @@ const className = Astro.props.class;
             {!(tags && tags.length > 0) && <div class="transition text-50 text-sm font-medium">{i18n(I18nKey.noTags)}</div>}
         </div>
     </div>
+
+    <!-- umami -->
+    {siteConfig.count.umamiCloud.enabled && !hideCount && <CountUmami includeIcon={false}></CountUmami>}
 </div>

@@ -1,8 +1,17 @@
 import type { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants";
 
+export interface BannerSrc {
+	path: string;
+	credit?: {
+		text: string;
+		url?: string;
+	};
+}
+
 export type SiteConfig = {
 	title: string;
 	subtitle: string;
+	headerimg?: string;
 
 	lang:
 		| "en"
@@ -30,9 +39,77 @@ export type SiteConfig = {
 			url?: string;
 		};
 	};
+	banner2: {
+		enable: boolean;
+		text: {
+			title?: string | null;
+			subtitle?: {
+				content: string | string[];
+				typewriterEnable: boolean;
+				typewriterSpeed: number;
+			};
+		};
+		waving: {
+			tiers: number[];
+			speed: number;
+			heightBottomMax: number;
+			amplitudeStdpara: [number, number];
+			frequencyTimes: number | number[];
+			nonHome: {
+				enable: boolean;
+				height: number;
+				heightFix?: number | null;
+			};
+		};
+		mobileWaving: {
+			tiers?: number[];
+			speed?: number;
+			heightBottomMax?: number;
+			amplitudeStdpara?: [number, number];
+			frequencyTimes?: number | number[];
+			nonHome: {
+				enable: boolean;
+				height: number;
+				heightFix?: number | null;
+			};
+		};
+		src: {
+			lightDesktop: BannerSrc[];
+			lightMobile: BannerSrc[];
+			darkDesktop: BannerSrc[] | "inherit";
+			darkMobile: BannerSrc[] | "inherit";
+			desktopBg: string;
+			mobileBg: string;
+			placeholder: string;
+		};
+		position?: "top" | "center" | "bottom";
+		height: number;
+		mobileHeight?: number;
+		heightFix?: number | null;
+		mobileHeightFix?: number | null;
+	};
+	comment: {
+		giscus?: {
+			enabled: boolean;
+			htmltag: string;
+		};
+		twikoo?: {
+			enabled: boolean;
+			envid: string;
+		};
+	};
+	count: {
+		umamiCloud: {
+			enabled: boolean;
+			websiteId: string;
+			htmltag: string;
+			apiKey: string;
+		};
+	};
 	toc: {
 		enable: boolean;
 		depth: 1 | 2 | 3;
+		whiteList?: string[];
 	};
 
 	favicon: Favicon[];

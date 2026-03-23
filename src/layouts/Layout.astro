@@ -13,6 +13,7 @@ import {
 	DARK_MODE,
 	DEFAULT_THEME,
 	LIGHT_MODE,
+	MAIN_PANEL_OVERLAPS_BANNER_HEIGHT,
 	PAGE_WIDTH,
 } from "../constants/constants";
 import { defaultFavicons } from "../constants/icon";
@@ -46,6 +47,10 @@ if (!banner || typeof banner !== "string" || banner.trim() === "") {
 banner = siteConfig.banner.src;
 
 const enableBanner = siteConfig.banner.enable;
+const enableBanner2 = siteConfig.banner2.enable;
+if (enableBanner && enableBanner2) {
+	throw new Error("Only one banner can be enabled at a time");
+}
 
 let pageTitle: string;
 if (title) {
@@ -70,12 +75,38 @@ const bannerOffsetByPosition = {
 };
 const bannerOffset =
 	bannerOffsetByPosition[siteConfig.banner.position || "center"];
+
+const mainPanelTop = siteConfig.banner.enable
+	? `calc(${BANNER_HEIGHT}vh - ${MAIN_PANEL_OVERLAPS_BANNER_HEIGHT}rem)`
+	: "5.5rem";
+
+const banner2Height = siteConfig.banner2.height;
+const banner2HeightFix =
+	typeof siteConfig.banner2.heightFix === "number"
+		? siteConfig.banner2.heightFix
+		: (siteConfig.banner2.waving.heightBottomMax - 100) / 2;
+const banner2HeightM = siteConfig.banner2.mobileHeight || banner2Height;
+const banner2HeightFixM =
+	typeof siteConfig.banner2.mobileHeightFix === "number"
+		? siteConfig.banner2.mobileHeightFix
+		: banner2HeightM;
+
+const banner2HeightNH = siteConfig.banner2.waving.nonHome.height;
+const banner2HeightNM = siteConfig.banner2.mobileWaving.nonHome.height;
+
+const banner2HeightNHFix =
+	typeof siteConfig.banner2.waving.nonHome.heightFix === "number"
+		? siteConfig.banner2.waving.nonHome.heightFix
+		: (siteConfig.banner2.waving.heightBottomMax - 100) / 2;
+const banner2HeightNMFix =
+	typeof siteConfig.banner2.mobileWaving.nonHome.heightFix === "number"
+		? siteConfig.banner2.mobileWaving.nonHome.heightFix
+		: (siteConfig.banner2.mobileWaving.heightBottomMax ||
+				siteConfig.banner2.waving.heightBottomMax - 100) / 2;
 ---
 
 <!DOCTYPE html>
-<html lang={siteLang} class="bg-[var(--page-bg)] transition text-[14px] md:text-[16px]"
-	  data-overlayscrollbars-initialize
->
+<html lang={siteLang} class="bg-[var(--page-bg)] transition text-[14px] md:text-[16px]">
 	<head>
 
 		<title>{pageTitle}</title>
@@ -137,6 +168,9 @@ const bannerOffset =
 			offset = offset - offset % 4;
 			document.documentElement.style.setProperty('--banner-height-extend', `${offset}px`);
 		</script>
+		{ siteConfig.count.umamiCloud.enabled &&  
+			<div set:html={siteConfig.count.umamiCloud.htmltag}></div>
+		}
 		<style define:vars={{
 			configHue,
 			'page-width': `${PAGE_WIDTH}rem`,
@@ -148,8 +182,13 @@ const bannerOffset =
 		<link rel="alternate" type="application/rss+xml" title={profileConfig.name} href={`${Astro.site}rss.xml`}/>
 
 	</head>
-	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
-		  data-overlayscrollbars-initialize
+	<body class=" min-h-screen transition " class:list={[{
+		"is-home": isHomePage, 
+		"enable-banner": enableBanner, 
+		"enable-banner2": enableBanner2,
+		"enable-b2nh": siteConfig.banner2.waving.nonHome.enable,
+		"enable-b2nm": siteConfig.banner2.mobileWaving.nonHome.enable,
+		"bg-fixed": enableBanner2}]}
 	>
 		<ConfigCarrier></ConfigCarrier>
 		<slot />
@@ -163,7 +202,37 @@ const bannerOffset =
 	bannerOffset,
 	'banner-height-home': `${BANNER_HEIGHT_HOME}vh`,
 	'banner-height': `${BANNER_HEIGHT}vh`,
+	
+	'banner2-height-home-desktop': `${banner2Height}vh`,
+	'banner2-content-height-home-desktop': `${banner2Height + banner2HeightFix}vh`,
+	'banner2-height-nonhome-desktop': `${banner2HeightNH}vh`,
+	'banner2-content-height-nonhome-desktop': `${banner2HeightNH + banner2HeightNHFix}vh`,
+	'banner2-dbg': `url(${siteConfig.banner2.src.desktopBg})`,
+
+	'banner2-height-home-mobile': `${banner2HeightM}vh`,
+	'banner2-content-height-home-mobile': `${banner2HeightM + banner2HeightFixM}vh`,
+	'banner2-height-nonhome-mobile': `${banner2HeightNM}vh`,
+	'banner2-content-height-nonhome-mobile': `${banner2HeightNM + banner2HeightNMFix}vh`,
+	'banner2-mbg': `url(${siteConfig.banner2.src.mobileBg})`,
+	'main-panel-top': `${mainPanelTop}`,
 }}>
+:root {
+	--top-row-height: calc(var(--banner-height-home) - 4.5rem);
+}
+body {
+	/* background: repeating-linear-gradient(45deg, yellow 0, yellow 15px, gray 15px, gray 30px); */
+    background: no-repeat center / cover;
+}
+@media (max-width: 768px) {
+	body {
+		background-image: var(--banner2-mbg);
+	}
+}
+@media (min-width: 769px) {
+	body {
+		background-image: var(--banner2-dbg);
+	}
+}
 @tailwind components;
 @layer components {
 	.enable-banner.is-home #banner-wrapper {
@@ -183,7 +252,7 @@ const bannerOffset =
 		@apply translate-y-[var(--banner-height-extend)];
 	}
 	.enable-banner #top-row {
-		@apply h-[calc(var(--banner-height-home)_-_4.5rem)] transition-all duration-300
+		@apply h-[var(--top-row-height)] transition-all duration-300
 	}
 	.enable-banner.is-home #sidebar-sticky {
 		@apply top-[calc(1rem_-_var(--banner-height-extend))]
@@ -192,16 +261,183 @@ const bannerOffset =
 		@apply opacity-0 -translate-y-16
 	}
 }
+@layer components {
+	/* 基本Banner2样式 */
+
+	/* 非主页。只有这个case需要处理main-panel的translate */
+	.enable-banner2 #banner2-container {
+		opacity: 0;
+		transition: opacity 0.3s ease;
+		will-change: opacity;
+	}
+
+	/* 复杂的选择器是为了解决css特定性 */
+	@media (min-width: 769px) {
+		.enable-banner2.is-home #banner2-container, 
+		.enable-banner2.enable-b2nh.is-home #banner2-container,
+		.enable-banner2.enable-b2nm.is-home #banner2-container,
+		.enable-banner2.enable-b2nh.enable-b2nm.is-home #banner2-container
+		{
+			height: var(--banner2-height-home-desktop);
+		}
+	}
+	@media (max-width: 768px) {
+		.enable-banner2.is-home #banner2-container, 
+		.enable-banner2.enable-b2nh.is-home #banner2-container,
+		.enable-banner2.enable-b2nm.is-home #banner2-container,
+		.enable-banner2.enable-b2nh.enable-b2nm.is-home #banner2-container
+		{
+			height: var(--banner2-height-home-mobile);
+		}
+	}
+
+	@media (min-width: 769px) {
+		body.enable-banner2.is-home, 
+		body.enable-banner2.enable-b2nh.is-home,
+		body.enable-banner2.enable-b2nm.is-home,
+		body.enable-banner2.enable-b2nh.enable-b2nm.is-home 
+		{
+			--main-content-translate-y: var(--banner2-content-height-home-desktop)
+		}
+	}
+	@media (max-width: 768px) {
+		body.enable-banner2.is-home, 
+		body.enable-banner2.enable-b2nh.is-home,
+		body.enable-banner2.enable-b2nm.is-home,
+		body.enable-banner2.enable-b2nh.enable-b2nm.is-home 
+		{
+			--main-content-translate-y: var(--banner2-content-height-home-mobile)
+		}
+	}
+
+	.enable-banner2 .main-content { 
+		transform: translateY(var(--main-content-translate-y));
+		transition: transform 0.3s ease-in-out;
+		will-change: transform;
+	}
+
+	body.enable-banner2 {
+		--main-content-translate-y: var(--main-panel-top)
+	}
+	
+	@media (min-width: 769px) {
+		body.enable-banner2.enable-b2nh {
+			--main-content-translate-y: var(--banner2-content-height-nonhome-desktop)
+		}
+	}
+	@media (max-width: 768px) {
+		body.enable-banner2.enable-b2nm {
+			--main-content-translate-y: var(--banner2-content-height-nonhome-mobile)
+		}
+	}
+
+	/* 非主页 b2nh banner */
+	@media (min-width: 769px) {
+		.enable-banner2.enable-b2nh #banner2-container {
+			height: var(--banner2-height-nonhome-desktop);
+		}
+
+		.enable-banner2.enable-b2nh .banner2-text {
+			opacity: 0;
+			transition: opacity 0.3s ease;
+			will-change: opacity;
+		}
+
+		.enable-banner2.enable-b2nh.is-home .banner2-text {
+			opacity: 1;
+		}
+	}
+	@media (max-width: 768px) {
+		.enable-banner2.enable-b2nm #banner2-container {
+			height: var(--banner2-height-nonhome-mobile);
+		}
+
+		.enable-banner2.enable-b2nm .banner2-text {
+			opacity: 0;
+			transition: opacity 0.3s ease;
+			will-change: opacity;
+		}
+
+		.enable-banner2.enable-b2nm.is-home .banner2-text {
+			opacity: 1;
+		}
+	}
+	
+	/* 主页 */
+
+	body {
+		padding-bottom: var(--main-content-translate-y);
+	}
+
+	.enable-banner2.is-home #banner2-container {
+		opacity: 1;
+	}
+	
+	@media (min-width: 769px) {
+		.enable-banner2.enable-b2nh #banner2-container {
+			opacity: 1;
+			transition: height 0.3s ease;
+			will-change: height;
+		}
+	}
+	@media (max-width: 768px) {
+		.enable-banner2.enable-b2nm #banner2-container {
+			opacity: 1;
+			transition: height 0.3s ease;
+			will-change: height;
+		}
+	}
+
+	/* 其他组件的fix */
+
+	.enable-banner2 #top-row {
+		position: fixed;
+		top: 0;
+		left: 50%;
+		transform: translateX(-50%);
+		margin: 0;
+		padding: 0;
+		width: 100%;
+	}
+
+	.enable-banner2.is-home #top-row {
+		position: fixed;
+		top: 0;
+		left: 50%;
+		transform: translateX(-50%);
+		margin: 0;
+		padding: 0;
+		width: 100%;
+	}
+
+    .enable-banner2 #sidebar-sticky {
+        /* 4px是额外gap，
+        banner2-height是main-content为banner的主动translate */
+        top: calc(4px - var(--main-content-translate-y));
+        /* top: 0 !important; */
+    }
+
+    .enable-banner2.is-home #sidebar-sticky {
+        /* 修正main content的translate后，额外保留1rem视觉空间 */
+        top: calc(1rem - var(--main-content-translate-y));
+    }
+}
+@layer components {
+	:root.is-home details#toc-wrapper {
+		opacity: 0;
+		pointer-events: none;
+	}
+}
 </style>
 
 <script>
-import 'overlayscrollbars/overlayscrollbars.css';
-import {
-	OverlayScrollbars,
-	// ScrollbarsHidingPlugin,
-	// SizeObserverPlugin,
-	// ClickScrollPlugin
-} from 'overlayscrollbars';
+// import 'overlayscrollbars/overlayscrollbars.css';
+// import {
+// 	// OverlayScrollbars,
+// 	// ScrollbarsHidingPlugin,
+// 	// SizeObserverPlugin,
+// 	// ClickScrollPlugin
+// } from 'overlayscrollbars';
 import {getHue, getStoredTheme, setHue, setTheme} from "../utils/setting-utils";
 import {pathsEqual, url} from "../utils/url-utils";
 import {
@@ -257,6 +493,7 @@ function disableAnimation() {
 */
 
 const bannerEnabled = !!document.getElementById('banner-wrapper')
+const banner2Enabled = !!document.getElementById('banner2-container')
 
 function setClickOutsideToClose(panel: string, ignores: string[]) {
 	document.addEventListener("click", event => {
@@ -287,25 +524,28 @@ function loadHue() {
 }
 
 function initCustomScrollbar() {
-	const bodyElement = document.querySelector('body');
-	if (!bodyElement) return;
-	OverlayScrollbars(
-		// docs say that a initialization to the body element would affect native functionality like window.scrollTo
-		// but just leave it here for now
-		{
-			target: bodyElement,
-			cancel: {
-				nativeScrollbarsOverlaid: true,    // don't initialize the overlay scrollbar if there is a native one
-			}
-		}, {
-		scrollbars: {
-			theme: 'scrollbar-base scrollbar-auto py-1',
-			autoHide: 'move',
-			autoHideDelay: 500,
-			autoHideSuspend: false,
-		},
-	});
+	/* OverlayScrollbars 就是导致重新加载的元凶。和active indicator无关。殺了。
+	*/
+	// const bodyElement = document.querySelector('body');
+	// if (!bodyElement) return;
+	// OverlayScrollbars(
+	// 	// docs say that a initialization to the body element would affect native functionality like window.scrollTo
+	// 	// but just leave it here for now
+	// 	{
+	// 		target: bodyElement,
+	// 		cancel: {
+	// 			nativeScrollbarsOverlaid: true,    // don't initialize the overlay scrollbar if there is a native one
+	// 		}
+	// 	}, {
+	// 	scrollbars: {
+	// 		theme: 'scrollbar-base scrollbar-auto py-1',
+	// 		autoHide: 'move',
+	// 		autoHideDelay: 500,
+	// 		autoHideSuspend: false,
+	// 	},
+	// });
 
+	/* 性能问题暂时不解析katex的滚动条。现在在markdown.css中独立设置.katex-display的overflow
 	const katexElements = document.querySelectorAll('.katex-display') as NodeListOf<HTMLElement>;
 
 	const katexObserverOptions = {
@@ -349,6 +589,7 @@ function initCustomScrollbar() {
 	katexElements.forEach(element => {
 		katexObserver.observe(element);
 	});
+	*/
 }
 
 function showBanner() {
@@ -363,13 +604,58 @@ function showBanner() {
 	banner.classList.remove('opacity-0', 'scale-105');
 }
 
+function showBanner2() { // 这里开始插入图片src
+	let srcType: string;
+	let randomImg: { path: string; credit: { url: string; text: string; }; };
+	if (window.innerWidth < 768) {
+		if (document.querySelector('html.dark')) srcType = "dm"
+		else srcType = "lm"
+	} else if (document.querySelector('html.dark')) srcType = "dd"
+	else srcType = "ld"
+	srcType = `banner2${srcType}imgsrc`
+	try {
+		const metaTag: HTMLMetaElement | null = document.querySelector('meta[name="banner2ImgSrc"]');
+		if (metaTag?.dataset[srcType]) {
+			const imgArray = JSON.parse(metaTag.dataset[srcType] || "[]");
+			randomImg = imgArray[Math.floor(Math.random() * imgArray.length)];
+		} else {
+			console.error("metaTag: ", metaTag);
+			throw new Error("banner2ImgSrc meta tag is missing or empty");
+		}
+		// 立即改背景
+		(document.querySelector('.banner2-banner') as HTMLElement)?.style.setProperty('--banner2-track-bg', `url(${randomImg.path})`);
+		// 立即改credit
+		const creditLink = document.querySelector(".banner2-credit-a");
+		const creditText = document.querySelector(".banner2-credit-text");
+		if (!creditLink || !creditText) return;
+		if (randomImg.credit) {
+			creditLink.setAttribute("href", randomImg.credit.url);
+			creditLink.setAttribute("target", "_blank");
+			creditText.textContent = randomImg.credit.text || "图片版权信息";
+		} else {
+			(creditLink as HTMLElement).style.display = "none";
+		}
+	} catch (error) {
+		console.error("Failed to parse banner2ImgSrc from meta tag:", error);
+		throw error;
+	}
+}
+
+function initCommentComponent() {
+  const event = new Event("loadComment");
+  document.dispatchEvent(event);
+}
+
 function init() {
 	// disableAnimation()()		// TODO
 	loadTheme();
 	loadHue();
 	initCustomScrollbar();
 	showBanner();
+	showBanner2();
+	initCommentComponent();
 }
+
 
 /* Load settings when entering the site */
 init();
@@ -380,10 +666,10 @@ const setup = () => {
 	window.swup.hooks.on('animation:out:start', () => {
 		const path = window.location.pathname
 		const body = document.querySelector('body')
-		if (path[path.length - 1] === '/' && !body.classList.contains('is-home')) {
-			body.classList.add('is-home')
-		} else if (path[path.length - 1] !== '/' && body.classList.contains('is-home')) {
-			body.classList.remove('is-home')
+		if (path[path.length - 1] === '/' && !body?.classList.contains('is-home')) {
+			body?.classList.add('is-home')
+		} else if (path[path.length - 1] !== '/' && body?.classList.contains('is-home')) {
+			body?.classList.remove('is-home')
 		}
 	})
 */
@@ -397,21 +683,24 @@ const setup = () => {
 		}
 		let threshold = window.innerHeight * (BANNER_HEIGHT / 100) - 72 - 16
 		let navbar = document.getElementById('navbar-wrapper')
-		if (!navbar || !document.body.classList.contains('lg:is-home')) {
+		if (!navbar || !document.body.classList.contains('is-home')) {
 			return
 		}
 		if (document.body.scrollTop >= threshold || document.documentElement.scrollTop >= threshold) {
 			navbar.classList.add('navbar-hidden')
 		}
 	})
-	window.swup.hooks.on('content:replace', initCustomScrollbar)
+	window.swup.hooks.on("content:replace", () => {
+		initCustomScrollbar();
+		initCommentComponent(); // 添加代码调用
+	});
 	window.swup.hooks.on('visit:start', (visit: {to: {url: string}}) => {
 		// change banner height immediately when a link is clicked
 		const bodyElement = document.querySelector('body')
 		if (pathsEqual(visit.to.url, url('/'))) {
-			bodyElement!.classList.add('lg:is-home');
+			bodyElement!.classList.add('is-home');
 		} else {
-			bodyElement!.classList.remove('lg:is-home');
+			bodyElement!.classList.remove('is-home');
 		}
 
 		// increase the page height during page transition to prevent the scrolling animation from jumping
@@ -420,10 +709,16 @@ const setup = () => {
 			heightExtend.classList.remove('hidden')
 		}
 
-		// Hide the TOC while scrolling back to top
-		let toc = document.getElementById('toc-wrapper');
-		if (toc) {
-			toc.classList.add('toc-not-ready')
+		// 视目标path隐藏/显示TOC wrapper
+		const wrapper = document.getElementById('toc-wrapper');
+		if (wrapper) {
+			// Hide the TOC while scrolling back to top
+			wrapper.classList.add('hidden-by-jump')
+			
+			// 在非/post/下的或非白名单内的不显示
+			// 此逻辑在SidebarTOC.astro中也有，此处用于swup跳转钩子，彼处用于初始化
+			const showToc = [...(siteConfig.toc.whiteList || []), '/posts/']?.some(element => visit.to.url.includes(element));
+       	 	wrapper?.classList.toggle('hidden-by-path', !showToc);
 		}
 	});
 	window.swup.hooks.on('page:view', () => {
@@ -443,10 +738,11 @@ const setup = () => {
             // Just make the transition looks better
             const toc = document.getElementById('toc-wrapper');
             if (toc) {
-                toc.classList.remove('toc-not-ready')
+                toc.classList.remove('hidden-by-jump')
             }
         }, 200)
 	});
+	
 }
 if (window?.swup?.hooks) {
 	setup()
@@ -455,45 +751,74 @@ if (window?.swup?.hooks) {
 }
 
 let backToTopBtn = document.getElementById('back-to-top-btn');
-let toc = document.getElementById('toc-wrapper');
+let wrapper = document.getElementById('toc-wrapper');
 let navbar = document.getElementById('navbar-wrapper')
+let bannerHeight = window.innerHeight * (BANNER_HEIGHT / 100)
 function scrollFunction() {
-	let bannerHeight = window.innerHeight * (BANNER_HEIGHT / 100)
+	if (bannerEnabled) {
+		if (wrapper) {
+			if (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight) {
+				wrapper.classList.remove('hidden-by-scroll')
+			} else {
+				wrapper.classList.add('hidden-by-scroll')
+			}
+		}
+		if (backToTopBtn) {
+			if (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight) {
+				backToTopBtn.classList.remove('hide')
+			} else {
+				backToTopBtn.classList.add('hide')
+			}
+		}
+		if (navbar) {
+			const NAVBAR_HEIGHT = 72
+			const MAIN_PANEL_EXCESS_HEIGHT = MAIN_PANEL_OVERLAPS_BANNER_HEIGHT * 16			// The height the main panel overlaps the banner
 
-	if (backToTopBtn) {
-		if (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight) {
-			backToTopBtn.classList.remove('hide')
-		} else {
-			backToTopBtn.classList.add('hide')
+			let bannerHeight = BANNER_HEIGHT
+			if (document.body.classList.contains('is-home') && window.innerWidth >= 1024) {
+				bannerHeight = BANNER_HEIGHT_HOME
+			}
+			let threshold = window.innerHeight * (bannerHeight / 100) - NAVBAR_HEIGHT - MAIN_PANEL_EXCESS_HEIGHT - 16
+			if (document.body.scrollTop >= threshold || document.documentElement.scrollTop >= threshold) {
+				navbar.classList.add('navbar-hidden')
+			} else {
+				navbar.classList.remove('navbar-hidden')
+			}
 		}
 	}
 
-	if (bannerEnabled && toc) {
-		if (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight) {
-			toc.classList.remove('toc-hide')
-		} else {
-			toc.classList.add('toc-hide')
+	if (banner2Enabled) {
+		const BANNER2_HEIGHT = parseInt(getComputedStyle(document.body).getPropertyValue('--main-content-translate-y').trim().match(/\d+/)?.[0] || '0');
+		let banner2Height = window.innerHeight * (BANNER2_HEIGHT / 100)
+		if (wrapper) {
+			if (document.body.scrollTop > banner2Height || document.documentElement.scrollTop > banner2Height) {
+				wrapper.classList.remove('hidden-by-scroll')
+			} else {
+				wrapper.classList.add('hidden-by-scroll')
+			}
 		}
-	}
-
-	if (!bannerEnabled) return
-	if (navbar) {
-		const NAVBAR_HEIGHT = 72
-		const MAIN_PANEL_EXCESS_HEIGHT = MAIN_PANEL_OVERLAPS_BANNER_HEIGHT * 16			// The height the main panel overlaps the banner
-
-		let bannerHeight = BANNER_HEIGHT
-		if (document.body.classList.contains('lg:is-home') && window.innerWidth >= 1024) {
-			bannerHeight = BANNER_HEIGHT_HOME
+		if (backToTopBtn) {
+			if (document.body.scrollTop > banner2Height || document.documentElement.scrollTop > banner2Height) {
+				backToTopBtn.classList.remove('hide')
+			} else {
+				backToTopBtn.classList.add('hide')
+			}
 		}
-		let threshold = window.innerHeight * (bannerHeight / 100) - NAVBAR_HEIGHT - MAIN_PANEL_EXCESS_HEIGHT - 16
-		if (document.body.scrollTop >= threshold || document.documentElement.scrollTop >= threshold) {
-			navbar.classList.add('navbar-hidden')
-		} else {
-			navbar.classList.remove('navbar-hidden')
+		if (navbar) {
+			const NAVBAR_HEIGHT = 72
+			const MAIN_PANEL_EXCESS_HEIGHT = MAIN_PANEL_OVERLAPS_BANNER_HEIGHT * 16			// The height the main panel overlaps the banner
+
+			let threshold = window.innerHeight * (BANNER2_HEIGHT / 100) - NAVBAR_HEIGHT - MAIN_PANEL_EXCESS_HEIGHT + 160
+			if (document.body.scrollTop >= threshold || document.documentElement.scrollTop >= threshold) {
+				navbar.classList.add('navbar-hidden')
+			} else {
+				navbar.classList.remove('navbar-hidden')
+			}
 		}
 	}
 }
 window.onscroll = scrollFunction
+scrollFunction()  // 初始化时调用一次，防止刷新时 TOC 显示
 
 window.onresize = () => {
 	// calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
