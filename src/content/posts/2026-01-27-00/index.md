@@ -2,6 +2,7 @@
 title: 关于新博客的Banner实现
 description: 超细节的纯CSS图片视差渐变水波纹效果
 published: 2026-01-27
+updated: 2026-03-23
 category: 前端
 tags:
   - 前端
@@ -51,21 +52,82 @@ tags:
 
 然而`left`终究是布局元素，动这么大的图片是会出事的。在性能一般的手机上多个大图这样移动时会导致闪屏，不得不用`translate`替代。
 
-将各个轨道设置不同的动画时长、clip-path、透明度就能自定义水波的参数。absolute叠加即可实现多层水波纹效果。
+将各个轨道设置不同的动画时长、`clip-path`、透明度就能自定义水波的参数。`absolute`叠加即可实现多层水波纹效果。
 
 ### 内部图片的固定
 
 内部图片，桌面端的纹理自然可以用`bg-fixed`直接固定，但手机端因为用了`translate`不太好这么做。
 
-在尝试了包括但不限于`sticky`(照样会被`translate`杀)、滚动进度动画(实在太新了)等方案，我决定以毒攻毒。
+在尝试了包括但不限于`sticky`(照样会被`translate`杀)、滚动进度动画(实在太新了)等方案，我决定以毒攻毒，用`translate`本身抵消`translate`。
 
 移动端现在中部使用左循环移动视窗，内部的图片使用右移动抵消左移动，牺牲纵向滚动视差，同时用上了各种优化，好歹是能用了。
 
+### 闪屏的解决方案(26.03.23)
+
+闪烁原因是一张张巨大的图片在屏幕上移动同时计算透明度会吃掉移动端本就一般的显卡巨量的性能造成失帧。
+
+解决方案是优化clippath svg路径使其只处理水波纹部分，就像这样：
+
+![波纹以上的图片被切除了](wave.png)
+
+然后再添加一张不动，普通的，反而是下面波纹部分被切去的图片：
+
+![静止的那个](static_one.png)
+
+这项改动并不复杂，但其效果是巨大的（我怎么早没想到）
+
+这个最低的分割高度应当满足：
+$$
+\mathrm{SplitHeight}_i = \operatorname{max}_i^n\,(H_i + A_i)
+$$
+即
+```js
+// 最大的高度+振幅
+const maxVbpa = Math.max(...heights.map((h, i) => {
+	return h + amplitudes[i]
+}));
+```
+
+## 波浪SVG
+
+```js
+// 动态的水波层
+
+const wT; // 一宽的循环次数，越大频率越高。经验值桌面3~4移动7~8
+const A; // 振幅，单位1=图片高度
+const vb; // 高度修正。为正时从底部提高，单位1=图片高度
+const maxVbps; // 
+
+const w = 1 / 4 / wT; // 循环节长度
+const wc = 4 / 25 / wT; // 二次贝塞尔近似三角函数的控制点经验值
+const repeatTimes = Math.ceil(0.4999 / w); // 避免误差ceil到上一级
+const wavePath =
+`M0,${1 - vb} ` + // 起始点，从左下角开始上升到最低高度，最低高度由此生效
+`c${w/2},0,${wc},${-A},${w},${-A} s${wc},${A},${w},${A} ` +
+(
+	`${wc},${-A},${w},${-A} ` + // 上升段
+	`${wc},${A},${w},${A} ` // 下降段
+).repeat(repeatTimes - 1) + // 循环，注意忽略第一节（第一节是cs不是ss）
+`v${-maxVbps} h-${repeatTimes * 2 * w} z`; // 垂直上升至波峰(v -A) → 水平左移回左侧(h -总宽度) → 闭合路径(z)，形成封闭裁剪区域
+
+// 静态的那个图片
+
+const staticBannerPath = `M0,0 v${1-maxVbps} h1 v${maxVbps-1} z`;
+
+```
+
 ## Code
 
-```css
-/* H5结构: .banner2-window>(.banner2-track.track-a)*n */
+```html
+<div class="banner2-window">
+	<div class="banner2-track track-a"></div>
+	<div class="banner2-track track-b"></div>
+	<!-- etc. -->
+	<div class="banner2-track banner2-static-track"></div>
+</div>
+```
 
+```css
 .track-a { animation-duration: 2s; clip-path: url(#clip-path-a); }
 .track-b { animation-duration: 3s; clip-path: url(#clip-path-b); }
 /* etc. */
@@ -87,6 +149,21 @@ tags:
     animation-timing-function: linear;
     animation-iteration-count: infinite;
     z-index: 2;
+}
+
+.banner2-track.banner2-static-track {
+	position: absolute;
+	left: 0;
+	width: 100vw;
+	height: 100%;
+	display: flex;
+	box-sizing: border-box;
+	background: no-repeat top / cover;
+	background-image: var(--banner2-track-bg);
+}
+
+.banner2-track.banner2-static-track::after {
+	display: none;
 }
 
 .banner2-track::after {
@@ -156,22 +233,5 @@ tags:
     0% { transform: translateX(0); }
     100% { transform: translateX(calc(var(--banner-width))); }
 }
-```
-
-## 附：波浪SVG
-
-```js
-const wT; // 一宽的循环次数，越大频率越高。经验值桌面3~4移动7~8
-const A; // 振幅，单位是图片高度%
-const vb; // 波浪中线-A/2。如100为紧贴底部完全利用图片，超过100会导致图片无法填满波谷。
-
-const w = 1 / 4 / wT;
-const wc = 4 / 25 / wT; // 二次贝塞尔近似三角函数的控制点经验值
-const repeatTimes = Math.ceil(0.4999 / w); // 避免误差ceil到上一级
-const wavePath = `
-M0,${1 - vb} 
-c${w/2},0,${wc},${-A},${w},${-A} s${wc},${A},${w},${A} ` +
-`${wc},${-A},${w},${-A} ${wc},${A},${w},${A} `.repeat(repeatTimes - 1) +
-`v${vb-1} h-${repeatTimes * 2 * w} z`;
 ```
 

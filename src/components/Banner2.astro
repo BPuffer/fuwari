@@ -16,7 +16,7 @@ const textSubtitleTypewriterSpeed =
 	siteConfig.banner2.text.subtitle?.typewriterSpeed || 100;
 
 const wavingTiers = siteConfig.banner2.waving.tiers;
-const { durations, frequencyTimes, amplitudes, heights } = banner2Param(
+const { durations, frequencyTimes, amplitudes, heights, maxVbpa } = banner2Param(
 	wavingTiers,
 	siteConfig.banner2.waving.speed,
 	siteConfig.banner2.waving.frequencyTimes,
@@ -30,6 +30,7 @@ const {
 	frequencyTimes: mobileFrequencyTimes,
 	amplitudes: mobileAmplitudes,
 	heights: mobileHeights,
+	maxVbpa: mobileMaxVbpa,
 } = banner2Param(
 	mobileWavingTiers,
 	siteConfig.banner2.mobileWaving.speed || siteConfig.banner2.waving.speed,
@@ -85,6 +86,11 @@ const {
                         }}
                     ></div>
                 ))}
+                <div class="banner2-track banner2-static-track" 
+                    style={{
+                        clipPath: `url(#banner2-cp-d-static)`,
+                        opacity: 1
+                    }}></div>
             </div>
             <div class="banner2-window banner2-window-mobile block lg:hidden">
                 {mobileWavingTiers.map((opacity, i) => (
@@ -96,12 +102,17 @@ const {
                         }}
                     ></div>
                 ))}
+                <div class="banner2-track banner2-static-track" 
+                    style={{
+                        clipPath: `url(#banner2-cp-m-static)`,
+                        opacity: 1
+                    }}></div>
             </div>
                 <a href="#" id="banner2-credit" target="_blank" rel="noopener" aria-label="Visit image source"
                     class="banner2-credit-a z-[6] group onload-animation transition-all duration-300 absolute flex justify-center items-center rounded-full px-3 right-4 bottom-10 bg-black/60 hover:bg-black/70 h-9" 
                 >
                     <Icon class="text-white/75 text-[1.25rem] mr-1" name="material-symbols:copyright-outline-rounded" ></Icon>
-                    <div class="banner2-credit-text text-white/75 text-xs">图片版权信息</div>
+                    <div class="banner2-credit-text text-white/75 text-xs">No credit...</div>
                     <Icon class:list={["banner2-credit-icon transition-all text-[oklch(0.75_0.14_var(--hue))] text-[0.75rem] opacity-0 group-hover:opacity-100 w-0 group-hover:w-4 duration-300 ml-1"]}
                         name="fa6-solid:arrow-up-right-from-square">
                     </Icon>
@@ -123,25 +134,37 @@ const {
         class="banner2-desktop-only"
     >
         <defs>
-        {wavingTiers.map((_, i) => { 
-            const wT = frequencyTimes[i];
-            const A = amplitudes[i];
-            const vb = heights[i];
+        {
+        wavingTiers.map((_, i) => { 
+            const wT = frequencyTimes[i]; // 循环频率
+            const A = amplitudes[i]; // 振幅(=y/2)
+            const vb = heights[i]; // 高度修正
 
-            const w = 1 / 4 / wT;
-            const wc = 4 / 25 / wT
-            const repeatTimes = Math.ceil(0.4999 / w);
-            const wavePath = `
-            M0,${1 - vb} 
-            c${w/2},0,${wc},${-A},${w},${-A} s${wc},${A},${w},${A} ` +
-            `${wc},${-A},${w},${-A} ${wc},${A},${w},${A} `.repeat(repeatTimes - 1) +
-            `v${vb-1} h-${repeatTimes * 2 * w} z`;
+            const w = 1 / 4 / wT; // 循环节长度
+            const wc = 4 / 25 / wT; // 曲率系数
+            const repeatTimes = Math.ceil(0.4999 / w); // 循环次数
+            const wavePath = 
+            `M0,${1 - vb} ` + // 起始点，从左上角开始下降到最低高度，最低高度由此生效
+            `c${w/2},0,${wc},${-A},${w},${-A} s${wc},${A},${w},${A} ` + // 第一段波浪
+            (
+                `${wc},${-A},${w},${-A} ` + // 上升段
+                `${wc},${A},${w},${A} ` // 下降段
+            ).repeat(repeatTimes - 1) + // 循环，注意忽略第一节（第一节是cs不是ss）
+            `v${-maxVbpa} h-${repeatTimes * 2 * w} z`; // 垂直上升至波峰(v -A) → 水平左移回左侧(h -总宽度) → 闭合路径(z)，形成封闭裁剪区域
             return (
             <clipPath id={`banner2-cp-d-${i}`} clipPathUnits="objectBoundingBox">
                 <path id={`wave-path-d-${i}`} d={wavePath}></path>
             </clipPath>
             )
-        })} 
+        })
+        }{(() => {
+            const underpath = `M0,0 v${1-maxVbpa} h1 v${maxVbpa-1} z`;
+            return (
+                <clipPath id={`banner2-cp-d-static`} clipPathUnits="objectBoundingBox">
+                    <path id={`wave-path-d-static`} d={underpath}></path>
+                </clipPath>
+            )
+        })()}
         </defs>
     </svg>
     <svg 
@@ -151,18 +174,21 @@ const {
     >
         <defs>
         {mobileWavingTiers.map((_, i) => { 
-            const wT = mobileFrequencyTimes[i];
-            const A = mobileAmplitudes[i];
-            const vb = mobileHeights[i];
+            const wT = mobileFrequencyTimes[i]; // 循环频率
+            const A = mobileAmplitudes[i]; // 振幅(=y/2)
+            const vb = mobileHeights[i]; // 高度修正
 
-            const w = 1 / 4 / wT;
-            const wc = 4 / 25 / wT
-            const repeatTimes = Math.ceil(0.4999 / w);
-            const wavePath = `
-            M0,${1 - vb} 
-            c${w/2},0,${wc},${-A},${w},${-A} s${wc},${A},${w},${A} ` +
-            `${wc},${-A},${w},${-A} ${wc},${A},${w},${A} `.repeat(repeatTimes - 1) +
-            `v${vb-1} h-${repeatTimes * 2 * w} z`;
+            const w = 1 / 4 / wT; // 循环节长度
+            const wc = 4 / 25 / wT; // 曲率系数
+            const repeatTimes = Math.ceil(0.4999 / w); // 循环次数
+            const wavePath = 
+            `M0,${1 - vb} ` + // 起始点，从左下角开始上升到最低高度，最低高度由此生效
+            `c${w/2},0,${wc},${-A},${w},${-A} s${wc},${A},${w},${A} ` + // 第一段波浪
+            (
+                `${wc},${-A},${w},${-A} ` + // 上升段
+                `${wc},${A},${w},${A} ` // 下降段
+            ).repeat(repeatTimes - 1) + // 循环，注意忽略第一节（第一节是cs不是ss）
+            `v${-mobileMaxVbpa} h-${repeatTimes * 2 * w} z`; // 垂直上升至波峰(v -A) → 水平左移回左侧(h -总宽度) → 闭合路径(z)，形成封闭裁剪区域
             if (wavePath.includes("NaN")) {
                 throw Error("Unexcepted NaN in wavePath: " + wavePath + JSON.stringify({
                     vb, wT, A, w, wc, repeatTimes
@@ -173,7 +199,14 @@ const {
                 <path id={`wave-path-m-${i}`} d={wavePath}></path>
             </clipPath>
             )
-        })} 
+        })} {(() => {
+            const underpath = `M0,0 v${1-mobileMaxVbpa} h1 v${mobileMaxVbpa-1} z`;
+            return (
+                <clipPath id={`banner2-cp-m-static`} clipPathUnits="objectBoundingBox">
+                    <path id={`wave-path-m-static`} d={underpath}></path>
+                </clipPath>
+            )
+        })()}
         </defs>
     </svg>
     
@@ -222,6 +255,29 @@ const {
         box-sizing: border-box;
         background: no-repeat fixed center / cover;
         background-image: var(--banner2-track-bg);
+    }
+
+    .banner2-track.banner2-static-track {
+        position: absolute;
+        width: 200vw;
+        height: 100%;
+        left: 0;
+
+        display: flex;
+        animation-name: banner2-desktop-cycle;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        z-index: 2;
+        
+        content: '';
+        display: block;
+        box-sizing: border-box;
+        background: no-repeat fixed center / cover;
+        background-image: var(--banner2-track-bg);
+    }
+
+    .banner2-track.banner2-static-track::after {
+        display: none;
     }
 
     .banner2-svg-desktop {
@@ -274,6 +330,22 @@ const {
         background-image: var(--banner2-track-bg);
         transform: translateZ(0);
         will-change: transform;
+    }
+
+    .banner2-track.banner2-static-track {
+        position: absolute;
+        left: 0;
+        width: 100vw;
+        height: 100%;
+        display: flex;
+        
+        box-sizing: border-box;
+        background: no-repeat top / cover;
+        background-image: var(--banner2-track-bg);
+    }
+
+    .banner2-track.banner2-static-track::after {
+        display: none;
     }
 
     .banner2-svg-desktop {

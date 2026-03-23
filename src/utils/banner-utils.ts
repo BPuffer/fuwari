@@ -99,11 +99,17 @@ function banner2Param(
 	// 高度：均匀分布。用linspace(0, vb_max, wT)
 	const heights = linspace(0, 1 - vbMax / 100, tierLen, false);
 
+	// 最大的高度+振幅
+	const maxVbpa = Math.max(...heights.map((h, i) => {
+		return h + amplitudes[i]
+	}));
+
 	return {
 		durations,
 		frequencyTimes: bFrequencyTimes,
 		amplitudes,
 		heights,
+		maxVbpa
 	};
 }
 
